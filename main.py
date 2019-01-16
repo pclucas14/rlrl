@@ -3,7 +3,7 @@ import torch
 import argparse
 import numpy as np
 from pydoc import locate
-sys.path.append('./reinforcement-learning')
+sys.path.append('./envs')
 
 from agent import * 
 
@@ -15,7 +15,7 @@ parser.add_argument('--beta_lr',    type=float, default=0.001)
 parser.add_argument('--vc',         type=float, default=0.)
 parser.add_argument('--gamma',      type=float, default=0.9)
 parser.add_argument('--n_episodes', type=int,   default=100000)
-parser.add_argument('--clip',       type=float, default=3)
+parser.add_argument('--clip',       type=float, default=999)
 parser.add_argument('--update_beta_every', type=int, default=1)
 parser.add_argument('--print_every',       type=int, default=1000)
 args = parser.parse_args()
@@ -77,7 +77,7 @@ for episode in range(args.n_episodes):
             memory = []
                 
         state = next_state 
-        v_tilde_prev = v_tilde
+        v_tilde_prev = v_tilde - reward
         t += 1
 
 
