@@ -17,9 +17,10 @@ parser.add_argument('--vc',         type=float, default=0.)
 parser.add_argument('--gamma',      type=float, default=1.)
 parser.add_argument('--n_episodes', type=int,   default=100000)
 parser.add_argument('--clip',       type=float, default=999)
-parser.add_argument('--update_beta_every', type=int, default=1)
 parser.add_argument('--print_every',       type=int, default=1000)
 parser.add_argument('--alias_percentage',  type=float, default=0)
+parser.add_argument('--lambda', type=float, default=0.5) # -1 for fully online
+parser.add_argument('--online', type=int, default=1)
 args = parser.parse_args()
 
 # environment creation 
@@ -47,7 +48,8 @@ for episode in range(args.n_episodes):
     t = 0    
 
     # buffer for beta updates
-    memory = []
+    memory_beta  = []
+    memory_value = []
 
     while not done:
         # fetch beta and value
@@ -57,34 +59,39 @@ for episode in range(args.n_episodes):
         # build on smoothed estimate
         v_tilde = beta * v + (1. - beta) * v_tilde_prev
         
-        # update the trace
-        v_net.update_trace(state, beta)
-
         # we are evaluating random policies. we pick a random action
         action = env.action_space.sample()
         next_state, reward, done, _ = env.step(action)
 
-        # build target
-        target = reward
-        if not done: 
-            # TODO: do we want to support other targets ?
-            target += args.gamma * v_net(next_state)
+        # update the trace
+        if args.online: 
+            v_net.update_trace(state, beta)
 
-        # update state values
-        td_error = target - v_tilde
-        v_net.update_values(td_error)
+            # build target
+            target = reward
+            if not done: target += args.gamma * v_net(next_state)
 
-        # store all required values for beta logits update
-        memory += [(state, beta, target, v_tilde, v_tilde_prev, v)]
+            # update state values
+            td_error = target - v_tilde
+            v_net.online_update(td_error)
 
-        # update beta values
-        if (t + 1) % args.update_beta_every == 0: 
-            b_net.update_logits(memory)
-            memory = []
-                
+            # update beta values
+            b_net.update_logits([(state, beta, target, v_tilde, v_tilde_prev, v)])
+        else:
+            # store all required values for beta logits update
+            memory_beta += [(state, beta, target, v_tilde, v_tilde_prev, v)]
+
+            # store all required_values for value update
+            memory_value += [(state, v_tilde, reward, beta)]
+
         state = next_state 
         v_tilde_prev = v_tilde - reward
         t += 1
+
+    if not args.online:
+        # time to update our values
+        b_net.update_logits(memory_beta)
+        v_net.offline_update(memory_value) 
 
     if (episode + 1) % args.print_every == 0:
         print('values\n'); print(v_net)

@@ -43,8 +43,15 @@ class V_net(object):
     def reset_trace(self):
         self.trace *= 0. 
 
-    def update_values(self, td_error):
+    def online_update(self, td_error):
         self.values += self.args.lr * td_error * self.trace
+
+    def offline_update(self, memory):
+        G = 0
+        for (state, v_tilde, reward, beta) in reversed(memory):
+            G = args.gamma * G + reward
+            # actually this would be for monte carlo, 
+            # TODO: Nishanth, finish this method :-) 
 
     # fetch state value
     def __call__(self, x):
