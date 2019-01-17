@@ -19,8 +19,7 @@ class Aliaser(object):
         self.aliased_indices += chain_length + 1
         
         for aliased_index in self.aliased_indices:
-            self.state_mapping[aliased_index] = \
-                    aliased_index + chain_length
+            self.state_mapping[aliased_index] = aliased_index + chain_length
 
     def __call__(self, index):
         return self.state_mapping[index]
