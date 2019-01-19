@@ -21,6 +21,8 @@ parser.add_argument('--print_every',       type=int, default=1000)
 parser.add_argument('--alias_percentage',  type=float, default=0)
 parser.add_argument('--lambda', type=float, default=0.5) # -1 for fully online
 parser.add_argument('--online', type=int, default=1)
+parser.add_argument('--lamb', type=float, default=0.9)
+parser.add_argument('--return_type', type=str, default="MC")
 args = parser.parse_args()
 
 # environment creation 
@@ -63,13 +65,13 @@ for episode in range(args.n_episodes):
         action = env.action_space.sample()
         next_state, reward, done, _ = env.step(action)
 
+        # build target
+        target = reward
+        if not done: target += args.gamma * v_net(next_state)
+
         # update the trace
         if args.online: 
             v_net.update_trace(state, beta)
-
-            # build target
-            target = reward
-            if not done: target += args.gamma * v_net(next_state)
 
             # update state values
             td_error = target - v_tilde
@@ -82,7 +84,7 @@ for episode in range(args.n_episodes):
             memory_beta += [(state, beta, target, v_tilde, v_tilde_prev, v)]
 
             # store all required_values for value update
-            memory_value += [(state, v_tilde, reward, beta)]
+            memory_value += [(state, next_state, v_tilde, reward, beta)]
 
         state = next_state 
         v_tilde_prev = v_tilde - reward
@@ -90,10 +92,19 @@ for episode in range(args.n_episodes):
 
     if not args.online:
         # time to update our values
+
+        # get lambda or MC targets
+        targets = v_net.get_targets(memory_value)
+
+        # update values
+        v_net.offline_update(memory_value, targets)
+        
+        # change the targets in the buffer
+        for i, ((state, beta, target, v_tilde, v_tilde_prev, v), target) in enumerate(zip(memory_beta,targets)):
+            memory_beta[i] = (state, beta, target, v_tilde, v_tilde_prev, v)
+
         b_net.update_logits(memory_beta)
-        v_net.offline_update(memory_value) 
 
     if (episode + 1) % args.print_every == 0:
         print('values\n'); print(v_net)
         print('betas \n'); print(b_net)
-       

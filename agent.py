@@ -46,12 +46,60 @@ class V_net(object):
     def online_update(self, td_error):
         self.values += self.args.lr * td_error * self.trace
 
-    def offline_update(self, memory):
-        G = 0
-        for (state, v_tilde, reward, beta) in reversed(memory):
-            G = args.gamma * G + reward
-            # actually this would be for monte carlo, 
-            # TODO: Nishanth, finish this method :-) 
+    def calc_lambda_return(self, G):
+        out = 0
+        if len(G) > 1:
+            for idx, ret in enumerate(G[:-1]):
+                out += (1-self.args.lamb)* self.args.lamb**idx * ret
+            out += self.args.lamb**(idx+1) * G[-1]
+            return out
+
+        else:
+            return G[0]
+
+    def get_targets(self, memory):
+        if self.args.return_type == "MC":
+            MC_returns = []
+            G = 0
+            for (state, _, v_tilde, reward, beta) in reversed(memory):
+                G = self.args.gamma * G + reward
+                MC_returns.append(G)
+            return MC_returns[::-1]
+
+        elif self.args.return_type == "Lambda":
+            Lambda_returns = []
+
+            rew = []
+            val = []
+            R = 0
+            for idx, (state, next_state, v_tilde, reward, beta) in enumerate(memory):
+                R = R + self.args.gamma**idx * reward
+                rew.append(R)
+
+                if next_state is not None:
+                    val.append(self.args.gamma**(idx+1) * self.values[next_state])
+                else:
+                    val.append(0)
+            G = [i+j for i,j in zip(rew, val)]
+
+            Lambda_returns.append(self.calc_lambda_return(G))
+
+            for i in range(1, len(memory)):
+                rew_temp = memory[i-1][3]
+                G = list((np.array(G[1:]) - rew_temp)/self.args.gamma)
+                Lambda_returns.append(self.calc_lambda_return(G))
+
+            return Lambda_returns
+
+        else:
+            raise ValueError
+
+    def offline_update(self, memory, targets):
+        for (state, next_state, v_tilde, reward, beta), target in zip(memory, targets):
+            self.update_trace(state, beta)
+            # update state values
+            td_error = target - v_tilde
+            self.online_update(td_error)        
 
     # fetch state value
     def __call__(self, x):
