@@ -47,17 +47,22 @@ class V_net(object):
         self.values += self.args.lr * td_error * self.trace
 
     def calc_lambda_return(self, G):
+
+        # calculate lambda returns from a list of n-step returns
         out = 0
         if len(G) > 1:
             for idx, ret in enumerate(G[:-1]):
                 out += (1-self.args.lamb)* self.args.lamb**idx * ret
             out += self.args.lamb**(idx+1) * G[-1]
             return out
-
         else:
             return G[0]
 
     def get_targets(self, memory):
+
+        # calculate the targets whether MC or lambda based
+
+        # MC return calculation
         if self.args.return_type == "MC":
             MC_returns = []
             G = 0
@@ -66,16 +71,15 @@ class V_net(object):
                 MC_returns.append(G)
             return MC_returns[::-1]
 
+        # lambda return calculation
         elif self.args.return_type == "Lambda":
             Lambda_returns = []
-
             rew = []
             val = []
             R = 0
             for idx, (state, next_state, v_tilde, reward, beta) in enumerate(memory):
                 R = R + self.args.gamma**idx * reward
                 rew.append(R)
-
                 if next_state is not None:
                     val.append(self.args.gamma**(idx+1) * self.values[next_state])
                 else:
