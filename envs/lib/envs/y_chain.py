@@ -4,7 +4,7 @@ from gym.utils import seeding
 from gym.envs.registration import register
 
 class YChain():
-    def __init__(self, n=5):
+    def __init__(self, n=3):
         self.len_chain = n #length of one chain
         self.n = n*3 + 1 #length of MDP
         self.state = 0  # Start at beginning of the chain
@@ -41,7 +41,7 @@ class YChain():
             if (self.state == self.len_chain * 2) or (self.state == self.len_chain * 3):
                 reward = (self.pos_reward if self.state == self.len_chain*2 else self.neg_reward)
                 done = True
-                self.state = 0
+                self.state = None
                 
             else:
                 self.state += 1
