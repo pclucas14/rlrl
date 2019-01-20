@@ -1,7 +1,6 @@
 import numpy as np
 from utils import pprint
 
-
 '''
 our agent
 '''
@@ -10,16 +9,17 @@ class Aliaser(object):
     def __init__(self, args, env):
         
         # aliasing setup for POMDP
-        assert args.alias_percentage == 0 or 'chain' in args.env.lower()
+        assert args.alias_count == 0 or 'chain' in args.env.lower()
         
         self.state_mapping = {i:i for i in range(env.observation_space.n)}
-        chain_length = (env.observation_space.n - 1) // 3
-        no_aliased_states = int(args.alias_percentage / 100. * chain_length)
-        self.aliased_indices = np.random.choice(chain_length, no_aliased_states)
-        self.aliased_indices += chain_length + 1
+        self.chain_length = (env.observation_space.n - 1) // 3
+        no_aliased_states = args.alias_count
+        #self.aliased_indices = np.random.choice(chain_length, no_aliased_states)
+        self.aliased_indices = np.array([2]) # manually setting the aliased state
+        self.aliased_indices += self.chain_length + 1
         
         for aliased_index in self.aliased_indices:
-            self.state_mapping[aliased_index] = aliased_index + chain_length
+            self.state_mapping[aliased_index] = aliased_index + self.chain_length
 
     def __call__(self, index):
         return self.state_mapping[index]
@@ -32,6 +32,7 @@ class V_net(object):
         self.args   = args
         self.env    = env
         self.ali    = aliaser
+        self.vbeta  = []
 
         # mask out aliased indices for clarity when printing
         self.trace[self.ali.aliased_indices] = -1
@@ -111,7 +112,8 @@ class V_net(object):
 
     def __str__(self):
        values = self.values
-       values[self.ali.aliased_indices] = -9.99
+       for aliased_index in self.ali.aliased_indices:
+            values[aliased_index] = values[aliased_index + self.ali.chain_length]
        return pprint(values.reshape(self.env.shape))
 
      
@@ -136,6 +138,6 @@ class B_net(object):
 
     def __str__(self):
         values = self.stable_sigmoid(self.b_logits)
-        values[self.ali.aliased_indices] = -9.99
+        for aliased_index in self.ali.aliased_indices:
+            values[aliased_index] = values[aliased_index + self.ali.chain_length]
         return pprint(values.reshape(self.env.shape))
-        

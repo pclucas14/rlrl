@@ -2,22 +2,24 @@ import gym
 from gym import spaces
 from gym.utils import seeding
 from gym.envs.registration import register
+import numpy as np
 
 class YChain():
-    def __init__(self, n=3):
+    def __init__(self, n=5):
         self.len_chain = n #length of one chain
         self.n = n*3 + 1 #length of MDP
         self.state = 0  # Start at beginning of the chain
         self.action_space = spaces.Discrete(2) #number of actions - 2 - [0: go left, 1: go right]
-        self.pos_reward = 1
+        self.pos_reward = +1
         self.neg_reward = -1
         self.observation_space = spaces.Discrete(self.n)
-        self.seed()
         self.bottle_neck = n #bottleneck state - that connects the 3 chains
 
     def seed(self, seed=None):
-        self.np_random, seed = seeding.np_random(seed)
+        np.random.seed(seed)
         return [seed]
+        #self.np_random, seed = seeding.np_random(seed)
+        #return [seed]
 
     def step(self, action):
         '''
