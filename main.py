@@ -102,10 +102,10 @@ for episode in range(args.n_episodes):
             # store all required_values for value update
             memory_value += [(state, next_state, v_tilde, reward, beta)]
 
-        if state == 9:
+        if state == 8:
             error = (v_tilde - 0.81)**2
             MSVE.append(error)
-        if state == 14:
+        if state == 13:
             error = (v_tilde + 0.81)**2
             MSVE.append(error)
 
