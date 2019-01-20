@@ -15,11 +15,12 @@ class Aliaser(object):
         self.chain_length = (env.observation_space.n - 1) // 3
         no_aliased_states = args.alias_count
         #self.aliased_indices = np.random.choice(chain_length, no_aliased_states)
-        self.aliased_indices = np.array([2]) # manually setting the aliased state
-        self.aliased_indices += self.chain_length + 1
+        if no_aliased_states > 0:
+            self.aliased_indices = np.array([2]) # manually setting the aliased state
+            self.aliased_indices += self.chain_length + 1
         
-        for aliased_index in self.aliased_indices:
-            self.state_mapping[aliased_index] = aliased_index + self.chain_length
+            for aliased_index in self.aliased_indices:
+                self.state_mapping[aliased_index] = aliased_index + self.chain_length
 
     def __call__(self, index):
         return self.state_mapping[index]
@@ -35,7 +36,8 @@ class V_net(object):
         self.vbeta  = []
 
         # mask out aliased indices for clarity when printing
-        self.trace[self.ali.aliased_indices] = -1
+        if self.args.alias_count:
+            self.trace[self.ali.aliased_indices] = -1
     
     def update_trace(self, state, beta):
         self.trace = (1. - beta) * self.trace
@@ -82,7 +84,7 @@ class V_net(object):
                 R = R + self.args.gamma**idx * reward
                 rew.append(R)
                 if next_state is not None:
-                    val.append(self.args.gamma**(idx+1) * self.values[next_state])
+                    val.append(self.args.gamma**(idx+1) * self(next_state))
                 else:
                     val.append(0)
             G = [i+j for i,j in zip(rew, val)]
@@ -112,8 +114,9 @@ class V_net(object):
 
     def __str__(self):
        values = self.values
-       for aliased_index in self.ali.aliased_indices:
-            values[aliased_index] = values[aliased_index + self.ali.chain_length]
+       if self.args.alias_count:
+            for aliased_index in self.ali.aliased_indices:
+                values[aliased_index] = values[aliased_index + self.ali.chain_length]
        return pprint(values.reshape(self.env.shape))
 
      
@@ -138,6 +141,7 @@ class B_net(object):
 
     def __str__(self):
         values = self.stable_sigmoid(self.b_logits)
-        for aliased_index in self.ali.aliased_indices:
-            values[aliased_index] = values[aliased_index + self.ali.chain_length]
+        if self.args.alias_count:
+            for aliased_index in self.ali.aliased_indices:
+                values[aliased_index] = values[aliased_index + self.ali.chain_length]
         return pprint(values.reshape(self.env.shape))

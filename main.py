@@ -102,10 +102,6 @@ for episode in range(args.n_episodes):
             # store all required_values for value update
             memory_value += [(state, next_state, v_tilde, reward, beta)]
 
-        state = next_state 
-        v_tilde_prev = v_tilde - reward
-        t += 1
-
         if state == 9:
             error = (v_tilde - 0.81)**2
             MSVE.append(error)
@@ -115,6 +111,10 @@ for episode in range(args.n_episodes):
 
         if episode+10 > args.n_episodes:
             v_net.vbeta.append(v_tilde)
+
+        state = next_state 
+        v_tilde_prev = v_tilde - reward
+        t += 1
 
     if not args.online:
         # time to update our values
@@ -144,7 +144,7 @@ for episode in range(args.n_episodes):
             print('betas \n'); print(b_net)
 
 import pickle
-if not recurrent:
+if not args.recurrent:
     with open('./pomdp_exp/vanilla/'+str(args.seed)+'.pkl', 'wb') as f:
         pickle.dump(MSVE, f)
 else:
