@@ -45,7 +45,7 @@ optimizer.set_params(params)
 
 def fit(args,suggestion):
     args.est_beta = suggestion["est_beta"]
-    beta_val =  0
+    beta_val =  1
     args.lambd =0
     args.lr = suggestion["lr"]
     args.beta_lr = suggestion["beta_lr"]
