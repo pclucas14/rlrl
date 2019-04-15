@@ -125,8 +125,8 @@ def fit(args,suggestion):
             #    print('values\n'); print(v_net)
             #    print('betas \n'); print(b_net)
     error = np.array(error_list).mean()*(-1)
-    if error < -2  or math.isnan(error) or math.isinf(error):
-        error = -2
+    if error < -10  or math.isnan(error) or math.isinf(error):
+        error = -10
     return error
 
 while True:
