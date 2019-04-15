@@ -34,8 +34,8 @@ args = parser.parse_args()
 
 optimizer = Optimizer("HFFoR5WtTjoHuBGq6lYaZhG0c")
 params = """
-est-beta integer [0 1] [0]
-beta_lr real [0.1 1] [0.2]
+est-beta integer [0, 1] [0]
+beta_lr real [0.1, 1] [0.2]
 beta_val real [0.2, 0.2] [0.2]
 lambd real [0, 1] [0]
 lr real [0.1,1] [0.2]
