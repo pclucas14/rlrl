@@ -20,7 +20,7 @@ class Aliaser(object):
             self.aliased_indices += 1
         #    a = 0
             for aliased_index in self.aliased_indices:
-                self.state_mapping[aliased_index] = aliased_index
+                self.state_mapping[aliased_index] = aliased_index + chain_length
         else:
             self.state_mapping = {i:i for i in range(env.observation_space.n)}
             chain_length = (env.observation_space.n - 1) // 3
