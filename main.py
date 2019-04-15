@@ -16,6 +16,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--env',        type=str,   default='chain')
 parser.add_argument('--lr',         type=float, default=0.1)
 parser.add_argument('--beta_lr',    type=float, default=0)
+parser.add_argument('--est-beta',   type=float, default=0)
 parser.add_argument('--init_value', type=float, default=0)
 parser.add_argument('--vc',         type=float, default=0.01)
 parser.add_argument('--gamma',      type=float, default=0.99)
@@ -33,7 +34,9 @@ args = parser.parse_args()
 
 optimizer = Optimizer("HFFoR5WtTjoHuBGq6lYaZhG0c")
 params = """
-beta_val real [0.1, 1] [0.2]
+est-beta integer [0 1] [0]
+beta_lr real [0.1 1] [0.2]
+beta_val real [0.2, 0.2] [0.2]
 lambd real [0, 1] [0]
 lr real [0.1,1] [0.2]
 """
@@ -43,9 +46,11 @@ optimizer.set_params(params)
 
 
 def fit(args,suggestion):
+    args.est_beta = suggestion["est-beta"]
     beta_val =  suggestion["beta_val"]
     args.lambd = suggestion["lambd"]
     args.lr = suggestion["lr"]
+    args.beta_lr = suggestion["beta_lr"]
     length_episode = 20
     tmp_opt = [0.00, 8.53, 8.39, 8.18, 8.01, 7.74, 7.57, 7.31, 6.92, 0.00]
     # environment creation
@@ -86,7 +91,7 @@ def fit(args,suggestion):
             next_state, reward, done, _ = env.step(action)
             #print("State: ",state," Next state ",next_state," V_tilde: ", v_tilde)
             # fetch beta and value
-            if args.beta_lr != 0: ## If we set learning rate to beta to 0 then we go back to TD
+            if args.est_beta == 1: ## If we set learning rate to beta to 0 then we go back to TD
                 beta = b_net(state)
                 beta_next = b_net(next_state)
             v  = v_net(state)
