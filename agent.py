@@ -11,15 +11,25 @@ class Aliaser(object):
         
         # aliasing setup for POMDP
         assert args.alias_percentage == 0 or 'chain' in args.env.lower()
-        
-        self.state_mapping = {i:i for i in range(env.observation_space.n)}
-        chain_length = (env.observation_space.n - 1) // 3
-        no_aliased_states = int(args.alias_percentage / 100. * chain_length)
-        self.aliased_indices = np.random.choice(chain_length, no_aliased_states)
-        self.aliased_indices += chain_length + 1
-        
-        for aliased_index in self.aliased_indices:
-            self.state_mapping[aliased_index] = aliased_index + chain_length
+
+        if 'ring' in args.env.lower():
+            self.state_mapping = {i: i for i in range(env.observation_space.n)}
+            chain_length = (env.observation_space.n - 1) // 2
+            no_aliased_states = int(args.alias_percentage / 100. * chain_length)
+            self.aliased_indices = np.random.choice(chain_length, no_aliased_states)
+            self.aliased_indices += 1
+        #    a = 0
+            for aliased_index in self.aliased_indices:
+                self.state_mapping[aliased_index] = aliased_index
+        else:
+            self.state_mapping = {i:i for i in range(env.observation_space.n)}
+            chain_length = (env.observation_space.n - 1) // 3
+            no_aliased_states = int(args.alias_percentage / 100. * chain_length)
+            self.aliased_indices = np.random.choice(chain_length, no_aliased_states)
+            self.aliased_indices += chain_length + 1
+
+            for aliased_index in self.aliased_indices:
+                self.state_mapping[aliased_index] = aliased_index + chain_length
 
     def __call__(self, index):
         return self.state_mapping[index]
