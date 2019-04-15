@@ -34,9 +34,8 @@ args = parser.parse_args()
 
 optimizer = Optimizer("HFFoR5WtTjoHuBGq6lYaZhG0c")
 params = """
-est-beta integer [0, 1] [0]
+est_beta integer [0, 1] [0]
 beta_lr real [0.1, 1] [0.2]
-beta_val real [0.2, 0.2] [0.2]
 lambd real [0, 1] [0]
 lr real [0.1,1] [0.2]
 """
@@ -46,8 +45,8 @@ optimizer.set_params(params)
 
 
 def fit(args,suggestion):
-    args.est_beta = suggestion["est-beta"]
-    beta_val =  suggestion["beta_val"]
+    args.est_beta = suggestion["est_beta"]
+    beta_val =  0
     args.lambd = suggestion["lambd"]
     args.lr = suggestion["lr"]
     args.beta_lr = suggestion["beta_lr"]
