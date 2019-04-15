@@ -26,21 +26,27 @@ class Aliaser(object):
 
 
 class V_net(object):
-    def __init__(self, args, env, aliaser):
-        self.trace  = np.zeros((env.observation_space.n, ))    
+    def __init__(self, args, env, aliaser,lambd,gamma):
+        self.trace  = np.zeros((env.observation_space.n, ))
+        self.beta_trace  = np.zeros((env.observation_space.n, ))
+
         self.values = np.zeros((env.observation_space.n, )) + args.init_value 
         self.args   = args
         self.env    = env
         self.ali    = aliaser
-
+        self.lambd = lambd
+        self.gamma = gamma
         # mask out aliased indices for clarity when printing
         self.trace[self.ali.aliased_indices] = -1
     
     def update_trace(self, state, beta):
-        self.trace = (1. - beta) * self.trace
-        self.trace[self.ali(state)] += beta
+        self.beta_trace = (1. - beta) * self.beta_trace
+        self.beta_trace[self.ali(state)] += beta
+        self.trace = self.gamma * self.lambd * self.trace + self.beta_trace
+        #self.trace = self.beta_trace
 
     def reset_trace(self):
+        self.beta_trace *= 0
         self.trace *= 0. 
 
     def online_update(self, td_error):
