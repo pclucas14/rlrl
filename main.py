@@ -33,11 +33,13 @@ parser.add_argument('--rep',type=int,default=10) # number of repetition
 args = parser.parse_args()
 
 optimizer = Optimizer("HFFoR5WtTjoHuBGq6lYaZhG0c")
+#est_beta integer [0, 0] [0]
+#beta_lr real [0.1, 0.1] [0.2]
+#
 params = """
-est_beta integer [0, 1] [0]
-beta_lr real [0.1, 1] [0.2]
 lambd real [0, 1] [0]
 lr real [0.1,1] [0.2]
+beta_val real [0, 1] [1]
 """
 
 optimizer.set_params(params)
@@ -45,11 +47,13 @@ optimizer.set_params(params)
 
 
 def fit(args,suggestion):
-    args.est_beta = suggestion["est_beta"]
-    beta_val =  1
+    #args.est_beta = suggestion["est_beta"]
+    args.est_beta = 0
+    beta_val =  suggestion["beta_val"]
     args.lambd = suggestion["lambd"]
     args.lr = suggestion["lr"]
-    args.beta_lr = suggestion["beta_lr"]
+    #args.beta_lr = suggestion["beta_lr"]
+    args.beta_lr = 0
     length_episode = 20
     tmp_opt = [0.00, 8.53, 8.39, 8.18, 8.01, 7.74, 7.57, 7.31, 6.92, 0.00]
     # environment creation
@@ -113,7 +117,7 @@ def fit(args,suggestion):
                 b_net.update_logits([(state, beta, target, v_tilde, v_tilde_prev, v)])
                 state = next_state
                 v_tilde_prev = (v_tilde - reward)/args.gamma
-                error = np.mean(np.abs(v_net.values - tmp_opt))
+                error = np.abs(v_tilde - tmp_opt[state])
                 if error < -10 or math.isnan(error) or math.isinf(error):
                     error = -10
                 error_list.append(error)
