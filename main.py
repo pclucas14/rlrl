@@ -37,9 +37,9 @@ optimizer = Optimizer("HFFoR5WtTjoHuBGq6lYaZhG0c")
 #beta_lr real [0.1, 0.1] [0.2]
 #
 params = """
-lambd real [0, 1] [0]
+beta_lr real [0.1, 1] [0.1]
+est_beta integer [0, 1] [1]
 lr real [0.1,1] [0.2]
-beta_val real [0, 1] [1]
 """
 
 optimizer.set_params(params)
@@ -47,13 +47,16 @@ optimizer.set_params(params)
 
 
 def fit(args,suggestion):
-    #args.est_beta = suggestion["est_beta"]
-    args.est_beta = 0
-    beta_val =  suggestion["beta_val"]
-    args.lambd = suggestion["lambd"]
+    args.est_beta = suggestion["est_beta"]
+    #args.est_beta = 0
+    #beta_val =  suggestion["beta_val"]
+    beta_val = 1
+
+    #args.lambd = suggestion["lambd"]
+    args.lambd = 0
     args.lr = suggestion["lr"]
-    #args.beta_lr = suggestion["beta_lr"]
-    args.beta_lr = 0
+    args.beta_lr = suggestion["beta_lr"]
+    #args.beta_lr = 0
     length_episode = 20
     tmp_opt = [0.00, 8.53, 8.39, 8.18, 8.01, 7.74, 7.57, 7.31, 6.92, 0.00]
     # environment creation
