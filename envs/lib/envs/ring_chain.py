@@ -5,7 +5,7 @@ from gym.envs.registration import register
 
 
 class Ring():
-    def __init__(self, n=10):
+    def __init__(self, n=9):
         self.n = n  # length of  ring
         self.state = n//2  # Start at beginning of the chain
         self.action_space = spaces.Discrete(2)  # number of actions - 2 - [0: go left, 1: go right]

@@ -8,7 +8,7 @@ our agent
 
 class Aliaser(object):
     def __init__(self, args, env):
-        
+        self.aliased_indices = []
         # aliasing setup for POMDP
         assert args.alias_percentage == 0 or 'chain' in args.env.lower()
 
@@ -21,6 +21,8 @@ class Aliaser(object):
         #    a = 0
             for aliased_index in self.aliased_indices:
                 self.state_mapping[aliased_index] = aliased_index + chain_length
+            for aliased_index in self.aliased_indices:
+                self.aliased_indices.append(aliased_index+chain_length)
         else:
             self.state_mapping = {i:i for i in range(env.observation_space.n)}
             chain_length = (env.observation_space.n - 1) // 3
