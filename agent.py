@@ -58,7 +58,7 @@ class V_net(object):
         else:
             return G[0]
 
-    def get_targets(self, memory):
+    def get_targets(self, memory, for_gru=False):
 
         # calculate the targets whether MC or lambda based
 
@@ -66,9 +66,14 @@ class V_net(object):
         if self.args.return_type == "MC":
             MC_returns = []
             G = 0
-            for (state, _, v_tilde, reward, beta) in reversed(memory):
-                G = self.args.gamma * G + reward
-                MC_returns.append(G)
+            if for_gru:
+                for (_, _, reward, _) in reversed(memory):
+                    G = self.args.gamma * G + reward
+                    MC_returns.append(G)
+            else:
+                for (state, _, v_tilde, reward, beta) in reversed(memory):
+                    G = self.args.gamma * G + reward
+                    MC_returns.append(G)
             return MC_returns[::-1]
 
         # lambda return calculation
@@ -77,24 +82,44 @@ class V_net(object):
             rew = []
             val = []
             R = 0
-            for idx, (state, next_state, v_tilde, reward, beta) in enumerate(memory):
-                R = R + self.args.gamma**idx * reward
-                rew.append(R)
-                if next_state is not None:
-                    val.append(self.args.gamma**(idx+1) * self.values[next_state])
-                else:
-                    val.append(0)
-            G = [i+j for i,j in zip(rew, val)]
 
-            Lambda_returns.append(self.calc_lambda_return(G))
+            if for_gru:
+                for idx, (state, next_state, reward, next_state_value) in enumerate(memory):
+                    R = R + self.args.gamma**idx * reward
+                    rew.append(R)
+                    if next_state is not None:
+                        val.append(self.args.gamma**(idx+1) * next_state_value)
+                    else:
+                        val.append(0)
 
-            for i in range(1, len(memory)):
-                rew_temp = memory[i-1][3]
-                G = list((np.array(G[1:]) - rew_temp)/self.args.gamma)
+                G = [i+j for i,j in zip(rew, val)]
                 Lambda_returns.append(self.calc_lambda_return(G))
 
-            return Lambda_returns
+                for i in range(1, len(memory)):
+                    rew_temp = memory[i-1][3]
+                    G = list((np.array(G[1:]) - rew_temp)/self.args.gamma)
+                    Lambda_returns.append(self.calc_lambda_return(G))
 
+                return Lambda_returns
+            else:
+                for idx, (state, next_state, v_tilde, reward, beta) in enumerate(memory):
+                    R = R + self.args.gamma**idx * reward
+                    rew.append(R)
+                    if next_state is not None:
+                        val.append(self.args.gamma**(idx+1) * self.values[next_state])
+                    else:
+                        val.append(0)
+                G = [i+j for i,j in zip(rew, val)]
+
+                Lambda_returns.append(self.calc_lambda_return(G))
+
+                for i in range(1, len(memory)):
+                    rew_temp = memory[i-1][3]
+                    G = list((np.array(G[1:]) - rew_temp)/self.args.gamma)
+                    Lambda_returns.append(self.calc_lambda_return(G))
+
+                return Lambda_returns
+                
         else:
             raise ValueError
 
